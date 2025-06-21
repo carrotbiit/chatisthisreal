@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { API_BASE_URL } from '../config';
 import './Pages.css';
 
 function Home() {
@@ -40,8 +41,8 @@ function Home() {
         const formData = new FormData();
         formData.append('file', file);
         
-        // Send file to Python backend
-        const response = await fetch('http://localhost:5000/upload', {
+        // Send file to Python backend using config URL
+        const response = await fetch(`${API_BASE_URL}/upload`, {
           method: 'POST',
           body: formData,
         });

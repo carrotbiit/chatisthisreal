@@ -4,11 +4,13 @@ import os
 from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
-# Update CORS to allow your production domain
+# CORS configuration - more flexible for development and production
 CORS(app, origins=[
     "http://localhost:5173",  # Development
-    "https://chatisthisreal.study",  # Production
-    "https://your-vercel-app.vercel.app"  # Vercel preview URL
+    "http://localhost:3000",  # Alternative dev port
+    "https://chatisthisreal.study",  # Production domain
+    "https://*.vercel.app",  # Vercel preview URLs
+    "https://*.onrender.com",  # Render URLs
 ])
 
 # Configuration

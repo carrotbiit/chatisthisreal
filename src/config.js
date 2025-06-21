@@ -4,7 +4,7 @@ const config = {
     apiUrl: 'http://localhost:5000'
   },
   production: {
-    apiUrl: 'https://your-backend-app-name.onrender.com' // Replace with your actual Render URL
+    apiUrl: 'https://chatisthisreal.onrender.com'
   }
 };
 

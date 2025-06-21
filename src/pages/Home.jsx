@@ -37,6 +37,10 @@ function Home() {
       const file = selectedImage || selectedVideo;
       
       try {
+        console.log('Starting upload...');
+        console.log('File:', file);
+        console.log('API URL:', `${API_BASE_URL}/upload`);
+        
         // Create FormData to send file
         const formData = new FormData();
         formData.append('file', file);
@@ -47,7 +51,11 @@ function Home() {
           body: formData,
         });
         
+        console.log('Response status:', response.status);
+        console.log('Response headers:', response.headers);
+        
         const result = await response.json();
+        console.log('Response body:', result);
         
         if (response.ok) {
           console.log('File uploaded successfully:', result);
@@ -58,6 +66,7 @@ function Home() {
         }
       } catch (error) {
         console.error('Error uploading file:', error);
+        console.error('Error details:', error.message);
         alert('Error uploading file. Please try again.');
       }
     }

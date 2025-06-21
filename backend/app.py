@@ -4,14 +4,8 @@ import os
 from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
-# CORS configuration - more flexible for development and production
-CORS(app, origins=[
-    "http://localhost:5173",  # Development
-    "http://localhost:3000",  # Alternative dev port
-    "https://chatisthisreal.study",  # Production domain
-    "https://*.vercel.app",  # Vercel preview URLs
-    "https://*.onrender.com",  # Render URLs
-])
+# CORS configuration - allow all origins to fix the CORS issue
+CORS(app, origins="*")  # Allow all origins for now
 
 # Configuration
 UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'uploads')

@@ -9,6 +9,7 @@ function Home() {
   const [uploadType, setUploadType] = useState('image');
   const [activeTab, setActiveTab] = useState('image');
   const [randomValue, setRandomValue] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleImageUpload = (event) => {
     const file = event.target.files[0];
@@ -36,6 +37,8 @@ function Home() {
     e.preventDefault();
     if (selectedImage || selectedVideo) {
       const file = selectedImage || selectedVideo;
+      
+      setIsLoading(true); // Start loading
       
       try {
         console.log('Starting upload...');
@@ -70,6 +73,8 @@ function Home() {
         console.error('Error uploading file:', error);
         console.error('Error details:', error.message);
         alert('Error uploading file. Please try again.');
+      } finally {
+        setIsLoading(false); // Stop loading regardless of success/failure
       }
     }
   };
@@ -104,6 +109,7 @@ function Home() {
     setPreviewUrl(null);
     setUploadType(activeTab);
     setRandomValue(null);
+    setIsLoading(false);
   };
 
   return (
@@ -151,10 +157,18 @@ function Home() {
           <div className="preview-header">
             <h1>Your {uploadType === 'image' ? 'Image' : 'Video'}</h1>
             <div className="preview-buttons">
-              <button onClick={handleSubmit} className="submit-btn">
-                Upload to Server
+              <button 
+                onClick={handleSubmit} 
+                className="submit-btn"
+                disabled={isLoading}
+              >
+                {isLoading ? 'Uploading...' : 'Upload to Server'}
               </button>
-              <button onClick={resetUpload} className="change-btn">
+              <button 
+                onClick={resetUpload} 
+                className="change-btn"
+                disabled={isLoading}
+              >
                 Upload New File
               </button>
             </div>
@@ -169,6 +183,12 @@ function Home() {
             {randomValue && (
               <div className="random-value-display">
                 <h3>Sigma Meter: {randomValue.toFixed(4)}</h3>
+              </div>
+            )}
+            {isLoading && (
+              <div className="loading-overlay">
+                <div className="loading-spinner"></div>
+                <p>Processing your {uploadType}...</p>
               </div>
             )}
           </div>

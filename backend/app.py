@@ -90,6 +90,20 @@ def upload_file():
         # Here you can add your Python processing logic
         # For example:
         # result = process_file(filepath)
+        print(f'''
+        ____________________________________________________
+        Image file path: {filepath}
+        ____________________________________________________
+        ''')
+        # Delete the uploaded file after processing
+        try:
+            if os.path.exists(filepath):
+                os.remove(filepath)
+                print(f"SUCCESS: File deleted from {filepath}")
+            else:
+                print(f"WARNING: File not found for deletion: {filepath}")
+        except Exception as e:
+            print(f"ERROR: Failed to delete file {filepath}: {str(e)}")
         
         return jsonify({
             'message': 'File uploaded successfully',

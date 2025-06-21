@@ -8,6 +8,7 @@ function Home() {
   const [previewUrl, setPreviewUrl] = useState(null);
   const [uploadType, setUploadType] = useState('image');
   const [activeTab, setActiveTab] = useState('image');
+  const [randomValue, setRandomValue] = useState(null);
 
   const handleImageUpload = (event) => {
     const file = event.target.files[0];
@@ -59,6 +60,7 @@ function Home() {
         
         if (response.ok) {
           console.log('File uploaded successfully:', result);
+          setRandomValue(result.random_value);
           alert(`${uploadType === 'image' ? 'Image' : 'Video'} uploaded successfully!`);
         } else {
           console.error('Upload failed:', result.error);
@@ -101,6 +103,7 @@ function Home() {
     setSelectedVideo(null);
     setPreviewUrl(null);
     setUploadType(activeTab);
+    setRandomValue(null);
   };
 
   return (
@@ -162,6 +165,11 @@ function Home() {
               <img src={previewUrl} alt="Preview" className="large-image" />
             ) : (
               <video src={previewUrl} controls className="large-video" />
+            )}
+            {randomValue && (
+              <div className="random-value-display">
+                <h3>Sigma Meter: {randomValue.toFixed(4)}</h3>
+              </div>
             )}
           </div>
         </div>

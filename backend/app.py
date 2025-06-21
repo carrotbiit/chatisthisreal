@@ -94,12 +94,6 @@ def upload_file():
         
         # Example usage of the random float function
         random_value = get_random_float(filepath)
-        
-        print(f'''
-        ____________________________________________________
-        sigma meter: {random_value}
-        ____________________________________________________
-        ''')
         # Delete the uploaded file after processing
         try:
             if os.path.exists(filepath):
@@ -113,7 +107,8 @@ def upload_file():
         return jsonify({
             'message': 'File uploaded successfully',
             'filename': filename,
-            'filepath': filepath
+            'filepath': filepath,
+            'random_value': random_value
         }), 200
         
     except Exception as e:

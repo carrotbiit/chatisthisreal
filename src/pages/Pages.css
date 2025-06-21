@@ -582,6 +582,23 @@
   }
   
   .preview-header h1 {
-    font-size: 2rem;
+    font-size: 1.8rem;
   }
+}
+
+/* Random Value Display Styles */
+.random-value-display {
+  margin-top: 20px;
+  padding: 15px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 10px;
+  color: white;
+  text-align: center;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.random-value-display h3 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 600;
 } 

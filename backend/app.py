@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 import os
 from werkzeug.utils import secure_filename
+from imageModel import get_random_float
 
 app = Flask(__name__)
 # CORS configuration - allow all origins to fix the CORS issue
@@ -90,9 +91,13 @@ def upload_file():
         # Here you can add your Python processing logic
         # For example:
         # result = process_file(filepath)
+        
+        # Example usage of the random float function
+        random_value = get_random_float(filepath)
+        
         print(f'''
         ____________________________________________________
-        Image file path: {filepath}
+        sigma meter: {random_value}
         ____________________________________________________
         ''')
         # Delete the uploaded file after processing

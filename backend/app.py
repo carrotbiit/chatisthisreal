@@ -13,6 +13,7 @@ try:
     from myEnv.runModel import runModel
     from myEnv.imageModel import extract_fft_features
     MODEL_AVAILABLE = True
+    print("Model successfully imported!")
 except ImportError as e:
     print(f"Warning: Could not import model files: {e}")
     MODEL_AVAILABLE = False
@@ -101,10 +102,6 @@ def upload_file():
         uploads_contents = os.listdir(app.config['UPLOAD_FOLDER'])
         print(f"Uploads directory contents: {uploads_contents}")
         
-        # Here you can add your Python processing logic
-        # For example:
-        # result = process_file(filepath)
-        
         # Use the actual AI detection model if available, otherwise use random
         if MODEL_AVAILABLE:
             try:
@@ -115,19 +112,19 @@ def upload_file():
                 # Convert model result to percentage (assuming it returns a confidence score)
                 if isinstance(model_result, (int, float)):
                     percentage = round(float(model_result), 1)
-                    print("==============PASSED==============")
+                    print("==============MODEL SUCCESS==============")
                 else:
                     # Fallback to random if model result is unexpected
                     percentage = round(random.random() * 100, 1)
-                    print("==============FAILED==============")
+                    print("==============MODEL FALLBACK==============")
             except Exception as e:
                 print(f"Model failed, using fallback: {e}")
-                print("==============FAILED==============")
+                print("==============MODEL ERROR FALLBACK==============")
                 percentage = round(random.random() * 100, 1)
         else:
             # Fallback to random function
             percentage = round(random.random() * 100, 1)
-            print("==============FAILED==============")
+            print("==============NO MODEL FALLBACK==============")
         
         # Calculate percentage and determine AI/Human
         if percentage < 50:
@@ -173,7 +170,7 @@ def upload_file():
 
 @app.route('/health', methods=['GET'])
 def health_check():
-    return jsonify({'status': 'healthy'}), 200
+    return jsonify({'status': 'healthy', 'model_available': MODEL_AVAILABLE}), 200
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000) 

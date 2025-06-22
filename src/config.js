@@ -8,5 +8,9 @@ const config = {
   }
 };
 
-const environment = import.meta.env.MODE || 'development';
+// More explicit environment detection
+const environment = import.meta.env.PROD ? 'production' : 'development';
+console.log('Environment detected:', environment);
+console.log('API URL:', config[environment].apiUrl);
+
 export const API_BASE_URL = config[environment].apiUrl; 

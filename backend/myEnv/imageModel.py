@@ -16,7 +16,6 @@ from scipy.stats import kurtosis, skew, pearsonr
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 import cv2
-import os
 from sklearn.model_selection import train_test_split
 def compute_fft(img):
     """

@@ -18,9 +18,3 @@ matplotlib
 
 # Progress bars and utilities
 tqdm
-
-# FastAPI (if needed for some components)
-uvicorn
-
-# Additional dependencies for advanced features
-pickle-mixin

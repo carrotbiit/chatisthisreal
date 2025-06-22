@@ -5,19 +5,6 @@ from werkzeug.utils import secure_filename
 import sys
 import random
 
-# Add myEnv to the Python path so we can import from it
-sys.path.append(os.path.join(os.path.dirname(__file__), 'myEnv'))
-
-# Import the actual model functions
-try:
-    from myEnv.runModel import runModel
-    from myEnv.imageModel import extract_fft_features
-    MODEL_AVAILABLE = True
-    print("Model successfully imported!")
-except ImportError as e:
-    print(f"Warning: Could not import model files: {e}")
-    MODEL_AVAILABLE = False
-
 app = Flask(__name__)
 # CORS configuration - allow all origins to fix the CORS issue
 CORS(app, origins="*")  # Allow all origins for now
@@ -34,6 +21,53 @@ try:
     print(f"Upload directory created/verified: {os.path.abspath(UPLOAD_FOLDER)}")
 except Exception as e:
     print(f"Error creating upload directory: {e}")
+
+# Initialize model variables
+MODEL_AVAILABLE = False
+runModel = None
+runVideo = None
+
+def load_model():
+    """Load the model from Render secret files to avoid memory issues"""
+    global MODEL_AVAILABLE, runModel, runVideo
+    try:
+        # Check if we're on Render (secret files are available)
+        secret_files_dir = os.environ.get('RENDER_SECRET_FILES_DIR')
+        if secret_files_dir:
+            print(f"Running on Render, checking secret files at: {secret_files_dir}")
+            model_file = os.path.join(secret_files_dir, 'image_classifier.pt')  # Use correct filename
+            if os.path.exists(model_file):
+                print(f"Found model file in secret files: {model_file}")
+            else:
+                print(f"Model file not found in secret files: {model_file}")
+                return False
+        else:
+            # Local development - check local myEnv directory
+            myenv_path = os.path.join(os.path.dirname(__file__), 'myEnv')
+            model_file = os.path.join(myenv_path, 'image_classifier.pt')
+            if not os.path.exists(model_file):
+                print(f"Model file not found locally: {model_file}")
+                return False
+        
+        # Add myEnv to the Python path so we can import from it
+        myenv_path = os.path.join(os.path.dirname(__file__), 'myEnv')
+        if myenv_path not in sys.path:
+            sys.path.append(myenv_path)
+        
+        # Import the actual model functions
+        from myEnv.runModel import runModel as imported_runModel
+        from myEnv.sigmaMethod import runVideo as imported_runVideo
+        runModel = imported_runModel
+        runVideo = imported_runVideo
+        MODEL_AVAILABLE = True
+        print("Model successfully loaded!")
+        return True
+    except ImportError as e:
+        print(f"Warning: Could not import model files: {e}")
+        return False
+    except Exception as e:
+        print(f"Error loading model: {e}")
+        return False
 
 def allowed_file(filename):
     return '.' in filename and \
@@ -102,11 +136,24 @@ def upload_file():
         uploads_contents = os.listdir(app.config['UPLOAD_FOLDER'])
         print(f"Uploads directory contents: {uploads_contents}")
         
+        # Try to load model if not already loaded
+        if not MODEL_AVAILABLE:
+            load_model()
+        
         # Use the actual AI detection model if available, otherwise use random
-        if MODEL_AVAILABLE:
+        if MODEL_AVAILABLE and runModel is not None:
             try:
+                # Determine if file is video or image based on extension
+                video_extensions = {'.mp4', '.avi', '.mov', '.wmv', '.flv', '.mkv', '.webm'}
+                file_extension = os.path.splitext(filepath)[1].lower()
+                
                 # Use the actual model to detect AI vs Human
-                model_result = runModel(filepath)
+                if file_extension in video_extensions and runVideo is not None:
+                    model_result = runVideo(filepath, 5)
+                    print("______________VIDEO______________")
+                else:
+                    model_result = runModel(filepath)
+                    print("______________IMAGE______________")
                 print(f"Model result: {model_result}")
                 
                 # Convert model result to percentage (assuming it returns a confidence score)

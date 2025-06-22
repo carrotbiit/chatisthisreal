@@ -1,5 +1,5 @@
 .topbar {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #1e3a8a;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
   position: fixed;
   top: 0;
@@ -16,12 +16,43 @@
   justify-content: space-between;
   align-items: center;
   height: 90px;
+  position: relative;
 }
 
 .topbar-brand {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
+  flex-shrink: 0;
+  position: relative;
+}
+
+.brand-content {
+  display: flex;
+  align-items: center;
+  gap: 40px;
+  justify-content: flex-start;
+  width: 100%;
+}
+
+.topbar-logo {
+  height: 50px;
+  width: auto;
+  border-radius: 8px;
+  position: fixed;
+  left: 20px;
+  top: 20px;
+  z-index: 1002;
+}
+
+.brand-text {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  position: fixed;
+  left: 180px;
+  top: 20px;
+  z-index: 1002;
 }
 
 .topbar-brand h2 {
@@ -43,24 +74,45 @@
 
 .topbar-menu {
   display: flex;
-  gap: 30px;
+  gap: 60px;
   align-items: center;
+  position: fixed;
+  right: 20px;
+  top: 15px;
+  z-index: 1001;
+}
+
+.mode-toggle-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 20px;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+}
+
+.mode-label {
+  color: white;
+  font-weight: 500;
+  font-size: 1.1rem;
+  white-space: nowrap;
 }
 
 .topbar-link {
   color: white;
   text-decoration: none;
   font-weight: 500;
-  font-size: 1rem;
-  padding: 8px 16px;
-  border-radius: 6px;
+  font-size: 1.1rem;
+  padding: 12px 20px;
+  border-radius: 8px;
   transition: all 0.3s ease;
   position: relative;
 }
 
 .topbar-link:hover {
-  background-color: rgba(255, 255, 255, 0.1);
+  background-color: #1e40af;
   transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .topbar-link::after {
@@ -84,6 +136,10 @@
   flex-direction: column;
   cursor: pointer;
   padding: 5px;
+  position: fixed;
+  right: 20px;
+  top: 25px;
+  z-index: 1001;
 }
 
 .hamburger {
@@ -96,19 +152,36 @@
 }
 
 /* Responsive Design */
-@media (max-width: 768px) {
+@media (max-width: 1100px) {
   .topbar-menu {
     position: fixed;
-    top: 70px;
+    top: 90px;
     left: -100%;
     width: 100%;
-    height: calc(100vh - 70px);
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    height: calc(100vh - 90px);
+    background: #1e3a8a;
     flex-direction: column;
     justify-content: flex-start;
-    padding-top: 40px;
-    gap: 20px;
+    padding-top: 30px;
+    gap: 30px;
     transition: left 0.3s ease;
+    right: auto;
+    transform: none;
+  }
+
+  .mode-toggle-container {
+    flex-direction: column;
+    gap: 20px;
+    padding: 20px;
+    width: 100%;
+    text-align: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    margin-bottom: 20px;
+  }
+
+  .mode-label {
+    font-size: 1.3rem;
+    font-weight: 600;
   }
 
   .topbar-menu.active {
@@ -116,14 +189,27 @@
   }
 
   .topbar-link {
-    font-size: 1.2rem;
-    padding: 15px 20px;
+    font-size: 1.3rem;
+    padding: 20px;
     width: 100%;
     text-align: center;
+    border-radius: 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .topbar-link:hover {
+    background-color: #1e40af;
+    transform: none;
+    box-shadow: none;
+  }
+
+  .topbar-link::after {
+    display: none;
   }
 
   .topbar-toggle {
     display: flex;
+    top: 15px;
   }
 
   .topbar-toggle.active .hamburger:nth-child(1) {

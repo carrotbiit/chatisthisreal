@@ -1,11 +1,12 @@
 import React from 'react';
 import './Pages.css';
+import './DarkMode.css';
 
-function About() {
+function About({ isDarkMode }) {
   return (
-    <div className="page">
+    <div className={`page ${isDarkMode ? 'dark-mode' : ''}`}>
       <h1>About Us</h1>
-      <p>Learn more about our company and our mission.</p>
+      <p>Learn more about us and our mission.</p>
       
       <div className="about-content">
         <div className="about-section">

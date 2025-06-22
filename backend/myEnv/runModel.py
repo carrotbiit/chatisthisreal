@@ -1,14 +1,15 @@
+import torch
+from PIL import Image
+from torchvision import transforms
+import cv2
+from torchvision import models
 import numpy as np
-import scipy.ndimage
 from skimage.feature import peak_local_max
 from scipy.spatial.distance import pdist
 from scipy.stats import kurtosis, skew, pearsonr
-import matplotlib.pyplot as plt
-from tqdm import tqdm
-import cv2
+import torch.nn as nn
 import os
-from torchvision import transforms
-from PIL import Image
+
 def compute_fft(img):
     """
     Compute the log-magnitude spectrum of the grayscale image `img`.
@@ -211,7 +212,7 @@ def fft_rgb_cross_spectral_corr(img_color):
     # Return as tuple (R-G, R-B, G-B)
     return tuple(corrs)
 
-def extract_fft_features(image_path,applyAugmentation,real,count):
+def extract_fft_features(image_path):
     """
     Read image from path, convert to grayscale and color as needed, then compute a feature vector
     containing all implemented FFT-based metrics.
@@ -226,44 +227,6 @@ def extract_fft_features(image_path,applyAugmentation,real,count):
         img = img[..., :3]
         
     
-    # Apply augmentation if requested
-    if applyAugmentation:
-        # Convert BGR to RGB for PIL
-        if img.ndim == 3:
-            img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-        else:
-            img_rgb = img
-        
-        # Convert to PIL Image
-        pil_img = Image.fromarray(img_rgb)
-        
-
-            # Default augmentation transform
-        augmentation_transform = transforms.Compose([
-            transforms.Resize((300, 300)),  # Much larger resize
-            transforms.RandomRotation(degrees=30),  # Very small rotation, no fill parameter
-            transforms.RandomHorizontalFlip(p=0.9),
-            transforms.RandomVerticalFlip(p=0.9),
-            transforms.CenterCrop(224)
-        ])
-        
-        #Apply augmentation
-        pil_img = augmentation_transform(pil_img)
-        
-        if real:  
-            pil_img.save(r"C:\Users\Tristan\Downloads\spurhacks\myEnv\AI-Generated-vs-Real-Images-Datasets\RealArt\RealArt"+f"\\Augmented-{count}.png", 'PNG')
-        else:
-            pil_img.save(r"C:\Users\Tristan\Downloads\spurhacks\myEnv\AI-Generated-vs-Real-Images-Datasets\AiArtData\AiArtData"+f"\\Augmented-{count}.png", 'PNG')
-
-        #Convert back to numpy array
-        img_aug = np.array(pil_img)
-        
-        #Convert RGB back to BGR for cv2 processing
-        if img_aug.ndim == 3:
-            img = cv2.cvtColor(img_aug, cv2.COLOR_RGB2BGR)
-        else:
-            img = img_aug
-        
         
     # Convert to float grayscale for FFT
     if img.ndim == 3:
@@ -313,62 +276,158 @@ def extract_fft_features(image_path,applyAugmentation,real,count):
         features['fft_corr_gb'] = corr_gb
     return features
 
-def calculateMetrics(imagePath):
-    """
-    Example function to compute and print FFT-based metrics for a single image.
-    """
-    features = extract_fft_features(imagePath)
-    for k, v in features.items():
-        print(f"{k}: {v}")
-
-# Example usage on directories
-def process_dataset(real_dir, fake_dir):
-    """
-    Process two directories of images ("real" and "fake") and compute average features.
-    """
-    def agg_dir(path,real):
-        sums = {}
-        count = 0
-        for file in tqdm(list(os.listdir(path))):
-            try:
-                fp = os.path.join(path, file)
-                feats = extract_fft_features(fp,True,real,count)
-                
-                newFile=f"Augmented-{count}.txt"
-                # newFile+=".txt"
-                if real:
-                    filePath=os.path.join(r"C:\Users\Tristan\Downloads\spurhacks\myEnv\preComputedFFT\REAL",newFile)
-                else:
-                    filePath=os.path.join(r"C:\Users\Tristan\Downloads\spurhacks\myEnv\preComputedFFT\FAKE",newFile)
-                for k, v in feats.items():
-                  
-                    newFile=os.path.basename(file)[:-4]
-                    newFile+=".txt"
-                    with open(filePath,"a") as f:
-                        f.write(str(k)+": "+str(v)+"\n")
-                        f.close()
-                   
-                            
-                    sums[k] = sums.get(k, 0.0) + v
-                count += 1
-            except Exception as e:
-                print(f"Skipping {file}: {e}")
-        if count > 0:
-            return {k: sums[k]/count for k in sums}
-        else:
-            return {}
-    real_avg = agg_dir(real_dir,True)
-    fake_avg = agg_dir(fake_dir,False)
-    print("Average features for real images:")
-    for k, v in real_avg.items():
-        print(f"{k}: {v}")
-    print("\nAverage features for fake images:")
-    for k, v in fake_avg.items():
-        print(f"{k}: {v}")
-
-# Note: you may call calculateMetrics or process_dataset as needed:
-# calculateMetrics("path/to/image.png")
-# process_dataset("path/to/real_images", "path/to/fake_images")
-process_dataset(r"C:\Users\Tristan\Downloads\spurhacks\myEnv\AI-Generated-vs-Real-Images-Datasets\RealArt\RealArt",r"C:\Users\Tristan\Downloads\spurhacks\myEnv\AI-Generated-vs-Real-Images-Datasets\AiArtData\AiArtData")
 
 
+
+class ImageClassifier(nn.Module):
+    def __init__(self, featureExtractor, fft_feature_count):
+        super(ImageClassifier, self).__init__()
+        self.features = featureExtractor
+        self.flatten = nn.Flatten()
+        
+        # Improved image branch with better capacity and regularization
+        self.imageBranch = nn.Sequential(
+            nn.Linear(512 * 7 * 7, 512),  # Increased capacity
+            nn.BatchNorm1d(512),
+            nn.ReLU(),
+            nn.Dropout(0.3),  # Reduced dropout for better learning
+            
+            nn.Linear(512, 256),
+            nn.BatchNorm1d(256),
+            nn.ReLU(),
+            nn.Dropout(0.3),
+            
+            nn.Linear(256, 128),
+            nn.BatchNorm1d(128),
+            nn.ReLU(),
+            nn.Dropout(0.2)
+        )
+        
+        # Improved FFT analysis branch
+        self.imageAnalysis = nn.Sequential(
+            nn.Linear(fft_feature_count, 128),  # Increased capacity
+            nn.BatchNorm1d(128),
+            nn.ReLU(),
+            nn.Dropout(0.2),
+            
+            nn.Linear(128, 64),
+            nn.BatchNorm1d(64),
+            nn.ReLU(),
+            nn.Dropout(0.2),
+            
+            nn.Linear(64, 32),
+            nn.BatchNorm1d(32),
+            nn.ReLU(),
+            nn.Dropout(0.1)
+        )
+        
+        # Improved final classifier
+        self.finalClassifier = nn.Sequential(
+            nn.Linear(128 + 32, 128),  # Combined features
+            nn.BatchNorm1d(128),
+            nn.ReLU(),
+            nn.Dropout(0.2),
+            
+            nn.Linear(128, 64),
+            nn.BatchNorm1d(64),
+            nn.ReLU(),
+            nn.Dropout(0.2),
+            
+            nn.Linear(64, 32),
+            nn.BatchNorm1d(32),
+            nn.ReLU(),
+            nn.Dropout(0.1),
+            
+            nn.Linear(32, 1),
+            nn.Sigmoid()
+        )
+        
+
+    def forward(self, image, metaData):
+        imgFeatures = self.features(image)
+        img = self.flatten(imgFeatures)
+        img = self.imageBranch(img)
+        
+        metaAnalysis = self.imageAnalysis(metaData)
+        
+        imgInfo = torch.cat([img, metaAnalysis], dim=1)
+        out = self.finalClassifier(imgInfo)
+        return out
+
+def runModel(imagePath):
+    img = Image.open(imagePath).convert('RGB')
+    processImage=transforms.Compose([
+            transforms.Resize((224, 224)),
+            transforms.ToTensor(),
+            transforms.Normalize(
+                mean=[0.485, 0.456, 0.406],
+                std=[0.229, 0.224, 0.225]
+            )
+        ])
+    # processImage converts PIL Image to PyTorch tensor
+    imgTensor = processImage(img)
+    
+    # Add batch dimension
+    imgTensor = imgTensor.unsqueeze(0)  # Shape: (1, 3, 224, 224)
+    
+    signalFeatures=extract_fft_features(imagePath)
+    fft_feature_names = [
+            'fft_vertical_line_ratio',
+            'fft_horizontal_line_ratio',
+            'fft_central_cross_ratio',
+            'fft_radial_slope',
+            'fft_high_low_freq_ratio',
+            'fft_mid_band_gap',
+            'fft_entropy',
+            'fft_peak_count',
+            'fft_peak_regularity',
+            'fft_angular_variance',
+            'fft_kurtosis',
+            'fft_skew',
+            'fft_corr_rg',
+            'fft_corr_rb',
+            'fft_corr_gb'
+        ]
+    to_log = ['fft_angular_variance', 'fft_peak_regularity', 'fft_high_low_freq_ratio']
+    
+    raw_vals = np.array([signalFeatures[name] for name in fft_feature_names], dtype=np.float32)
+    # Handle NaN
+    
+    if np.isnan(raw_vals).any():
+        raw_vals = np.nan_to_num(raw_vals, nan=0.0)
+    # Apply log1p to selected features
+    for i, name in enumerate(fft_feature_names):
+        if name in to_log:
+            v = raw_vals[i]
+            if v < 0:
+                v = 0.0
+            raw_vals[i] = np.log1p(v)
+    
+    device=torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    # Convert to tensor and add batch dimension
+    raw_vals = torch.tensor(raw_vals, dtype=torch.float32).unsqueeze(0)  # Shape: (1, 15)
+    
+    vgg16 = models.vgg16(pretrained=True)
+    feature_extractor = vgg16.features
+    model=ImageClassifier(feature_extractor,15)
+    model=model.to(device)
+    
+    # Use dynamic path for model file
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    model_path = os.path.join(current_dir, "image_classifier.pt")
+    
+    try:
+        model.load_state_dict(torch.load(model_path, map_location=device))
+    except FileNotFoundError:
+        print(f"Model file not found at {model_path}")
+        # Return a fallback value if model is not available
+        return 50.0  # Return 50.0% as neutral value (already rounded to 1 decimal)
+
+    model.eval()  # Set to evaluation mode
+    with torch.no_grad():
+        outputs=model(imgTensor,raw_vals)
+        probability = outputs.item()
+        return round(probability * 100, 1)  # Convert to percentage (0-100) and round to 1 decimal
+
+
+# runModel(r"FirstImmigrant.jpg")

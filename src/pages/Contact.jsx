@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import './Pages.css';
+import './DarkMode.css';
 
-function Contact() {
+function Contact({ isDarkMode }) {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -41,7 +42,7 @@ function Contact() {
   };
 
   return (
-    <div className="page">
+    <div className={`page ${isDarkMode ? 'dark-mode' : ''}`}>
       <h1>Report a Problem</h1>
       <p>Report any issues you find so we can fix them.</p>
       

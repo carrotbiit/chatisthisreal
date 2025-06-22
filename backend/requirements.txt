@@ -1,4 +1,26 @@
 Flask==2.3.3
 Flask-CORS==4.0.0
 Werkzeug==2.3.7
-gunicorn==21.2.0 
+gunicorn==21.2.0
+
+# Core ML and Data Science
+torch
+torchvision
+numpy
+scipy
+scikit-learn
+scikit-image
+
+# Image Processing
+Pillow
+opencv-python
+matplotlib
+
+# Progress bars and utilities
+tqdm
+
+# FastAPI (if needed for some components)
+uvicorn
+
+# Additional dependencies for advanced features
+pickle-mixin

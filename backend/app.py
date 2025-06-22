@@ -3,6 +3,20 @@ from flask_cors import CORS
 import os
 from werkzeug.utils import secure_filename
 from imageModel import get_random_float
+import sys
+import random
+
+# Add myEnv to the Python path so we can import from it
+sys.path.append(os.path.join(os.path.dirname(__file__), 'myEnv'))
+
+# Import the actual model functions
+try:
+    from myEnv.runModel import runModel
+    from myEnv.imageModel import extract_fft_features
+    MODEL_AVAILABLE = True
+except ImportError as e:
+    print(f"Warning: Could not import model files: {e}")
+    MODEL_AVAILABLE = False
 
 app = Flask(__name__)
 # CORS configuration - allow all origins to fix the CORS issue
@@ -92,27 +106,45 @@ def upload_file():
         # For example:
         # result = process_file(filepath)
         
-        # Example usage of the random float function
-        random_value = get_random_float(filepath)
+        # Use the actual AI detection model if available, otherwise use random
+        if MODEL_AVAILABLE:
+            try:
+                # Use the actual model to detect AI vs Human
+                model_result = runModel(filepath)
+                print(f"Model result: {model_result}")
+                
+                # Convert model result to percentage (assuming it returns a confidence score)
+                if isinstance(model_result, (int, float)):
+                    percentage = round(float(model_result), 1)
+                    print("==============PASSED==============")
+                else:
+                    # Fallback to random if model result is unexpected
+                    percentage = round(random.random() * 100, 1)
+                    print("==============FAILED==============")
+            except Exception as e:
+                print(f"Model failed, using fallback: {e}")
+                print("==============FAILED==============")
+                percentage = round(random.random() * 100, 1)
+        else:
+            # Fallback to random function
+            percentage = round(random.random() * 100, 1)
+            print("==============FAILED==============")
         
         # Calculate percentage and determine AI/Human
-        percentage = round(random_value * 100, 1)
-        
         if percentage < 50:
             confidence = round(100 - percentage, 1)
             analysis_result = f"{confidence}% sure this is AI"
         else:
-            confidence = percentage
+            confidence = round(percentage, 1)
             analysis_result = f"{confidence}% sure this is human"
         
-        print(f"Random value: {random_value}")
         print(f"Percentage: {percentage}%")
         print(f"Analysis: {analysis_result}")
         
         print(f'''
         ____________________________________________________
         Image file path: {filepath}
-        Random value: {random_value}
+        Percentage: {percentage}%
         Analysis: {analysis_result}
         ____________________________________________________
         ''')
@@ -131,9 +163,9 @@ def upload_file():
             'message': 'File uploaded successfully',
             'filename': filename,
             'filepath': filepath,
-            'random_value': random_value,
             'percentage': percentage,
-            'analysis_result': analysis_result
+            'analysis_result': analysis_result,
+            'model_used': MODEL_AVAILABLE
         }), 200
         
     except Exception as e:

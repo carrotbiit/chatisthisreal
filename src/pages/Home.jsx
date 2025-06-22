@@ -1,15 +1,28 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { API_BASE_URL } from '../config';
 import './Pages.css';
+import './DarkMode.css';
 
-function Home() {
+function Home({ isDarkMode, onToggleDarkMode }) {
   const [selectedImage, setSelectedImage] = useState(null);
   const [selectedVideo, setSelectedVideo] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
   const [uploadType, setUploadType] = useState('image');
   const [activeTab, setActiveTab] = useState('image');
-  const [randomValue, setRandomValue] = useState(null);
+  const [analysisResult, setAnalysisResult] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [percentage, setPercentage] = useState(0);
+  const [isDragOver, setIsDragOver] = useState(false);
+
+  // Auto-scroll to bottom when analysis result is displayed
+  useEffect(() => {
+    if (analysisResult) {
+      window.scrollTo({
+        top: document.documentElement.scrollHeight,
+        behavior: 'smooth'
+      });
+    }
+  }, [analysisResult]);
 
   const handleImageUpload = (event) => {
     const file = event.target.files[0];
@@ -63,7 +76,8 @@ function Home() {
         
         if (response.ok) {
           console.log('File uploaded successfully:', result);
-          setRandomValue(result.random_value);
+          setAnalysisResult(result.analysis_result);
+          setPercentage(result.percentage);
           alert(`${uploadType === 'image' ? 'Image' : 'Video'} uploaded successfully!`);
         } else {
           console.error('Upload failed:', result.error);
@@ -81,10 +95,17 @@ function Home() {
 
   const handleDragOver = (e) => {
     e.preventDefault();
+    setIsDragOver(true);
+  };
+
+  const handleDragLeave = (e) => {
+    e.preventDefault();
+    setIsDragOver(false);
   };
 
   const handleDrop = (e) => {
     e.preventDefault();
+    setIsDragOver(false);
     const file = e.dataTransfer.files[0];
     if (file) {
       if (file.type.startsWith('image/')) {
@@ -108,12 +129,14 @@ function Home() {
     setSelectedVideo(null);
     setPreviewUrl(null);
     setUploadType(activeTab);
-    setRandomValue(null);
+    setAnalysisResult(null);
+    setPercentage(0);
     setIsLoading(false);
+    setIsDragOver(false);
   };
 
   return (
-    <div className="page">
+    <div className={`page ${isDarkMode ? 'dark-mode' : ''}`}>
       {!previewUrl ? (
         <>
           <h1>Upload Your Image/Video</h1>
@@ -134,7 +157,12 @@ function Home() {
           </div>
           
           <div className="upload-container">
-            <div className="upload-area">
+            <div 
+              className={`upload-area ${isDragOver ? 'dragover' : ''}`}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+            >
               <div className="upload-content">
                 <h3>Drag & Drop your {activeTab} here</h3>
                 <p>or</p>
@@ -180,9 +208,24 @@ function Home() {
             ) : (
               <video src={previewUrl} controls className="large-video" />
             )}
-            {randomValue && (
-              <div className="random-value-display">
-                <h3>Sigma Meter: {randomValue.toFixed(4)}</h3>
+            {analysisResult && (
+              <div className="analysis-result">
+                <h3>Media Analysis</h3>
+                <div className="gradient-bar-container">
+                  <div className="gradient-bar">
+                    <div 
+                      className="percentage-marker" 
+                      style={{ left: `${percentage}%` }}
+                    ></div>
+                  </div>
+                  <div className="gradient-labels">
+                    <span className="label-ai">AI (0%)</span>
+                    <span className="label-human">Human (100%)</span>
+                  </div>
+                  <div className="percentage-display">
+                    <span className="percentage-value">{percentage}</span>
+                  </div>
+                </div>
               </div>
             )}
             {isLoading && (
@@ -198,4 +241,4 @@ function Home() {
   );
 }
 
-export default Home; 
+export default Home;

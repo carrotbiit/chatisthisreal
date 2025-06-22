@@ -22,20 +22,33 @@ try:
 except Exception as e:
     print(f"Error creating upload directory: {e}")
 
-# Initialize model variables
+# Initialize model variables - will be loaded only when needed
 MODEL_AVAILABLE = False
 runModel = None
 runVideo = None
+model_loaded = False
 
 def load_model():
     """Load the model from Render secret files to avoid memory issues"""
-    global MODEL_AVAILABLE, runModel, runVideo
+    global MODEL_AVAILABLE, runModel, runVideo, model_loaded
+    
+    if model_loaded:
+        return MODEL_AVAILABLE
+        
     try:
+        print("Loading ML dependencies...")
+        
+        # Optimize PyTorch memory usage
+        import torch
+        torch.set_num_threads(1)  # Use only 1 thread to save memory
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()  # Clear GPU cache if available
+        
         # Check if we're on Render (secret files are available)
         secret_files_dir = os.environ.get('RENDER_SECRET_FILES_DIR')
         if secret_files_dir:
             print(f"Running on Render, checking secret files at: {secret_files_dir}")
-            model_file = os.path.join(secret_files_dir, 'image_classifier.pt')  # Use correct filename
+            model_file = os.path.join(secret_files_dir, 'image_classifier.pt')
             if os.path.exists(model_file):
                 print(f"Found model file in secret files: {model_file}")
             else:
@@ -54,12 +67,13 @@ def load_model():
         if myenv_path not in sys.path:
             sys.path.append(myenv_path)
         
-        # Import the actual model functions
+        # Import the actual model functions only when needed
         from myEnv.runModel import runModel as imported_runModel
         from myEnv.sigmaMethod import runVideo as imported_runVideo
         runModel = imported_runModel
         runVideo = imported_runVideo
         MODEL_AVAILABLE = True
+        model_loaded = True
         print("Model successfully loaded!")
         return True
     except ImportError as e:
@@ -201,6 +215,18 @@ def upload_file():
                 print(f"WARNING: File not found for deletion: {filepath}")
         except Exception as e:
             print(f"ERROR: Failed to delete file {filepath}: {str(e)}")
+        
+        # Clean up memory after processing
+        try:
+            import gc
+            gc.collect()  # Force garbage collection
+            if 'torch' in sys.modules:
+                import torch
+                if torch.cuda.is_available():
+                    torch.cuda.empty_cache()
+            print("Memory cleanup completed")
+        except Exception as e:
+            print(f"Memory cleanup failed: {e}")
         
         return jsonify({
             'message': 'File uploaded successfully',

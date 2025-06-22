@@ -94,6 +94,29 @@ def upload_file():
         
         # Example usage of the random float function
         random_value = get_random_float(filepath)
+        
+        # Calculate percentage and determine AI/Human
+        percentage = round(random_value * 100, 1)
+        
+        if percentage < 50:
+            confidence = round(100 - percentage, 1)
+            analysis_result = f"{confidence}% sure this is AI"
+        else:
+            confidence = percentage
+            analysis_result = f"{confidence}% sure this is human"
+        
+        print(f"Random value: {random_value}")
+        print(f"Percentage: {percentage}%")
+        print(f"Analysis: {analysis_result}")
+        
+        print(f'''
+        ____________________________________________________
+        Image file path: {filepath}
+        Random value: {random_value}
+        Analysis: {analysis_result}
+        ____________________________________________________
+        ''')
+        
         # Delete the uploaded file after processing
         try:
             if os.path.exists(filepath):
@@ -108,7 +131,9 @@ def upload_file():
             'message': 'File uploaded successfully',
             'filename': filename,
             'filepath': filepath,
-            'random_value': random_value
+            'random_value': random_value,
+            'percentage': percentage,
+            'analysis_result': analysis_result
         }), 200
         
     except Exception as e:
